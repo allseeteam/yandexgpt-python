@@ -1,0 +1,19 @@
+# Venv
+venv
+
+# IDE Settings
+.idea
+
+# Jupyter Notebooks
+notebooks
+*.ipynb_checkpoints
+
+# Python cache
+__pycache__
+
+# .env files
+env/.env.api_key
+env/.env.base64
+
+# egg-info
+*.egg-info
