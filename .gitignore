@@ -13,7 +13,8 @@ __pycache__
 
 # .env files
 env/.env.api_key
-env/.env.base64
+env/.env.iam_token_generation
+env/.env.iam_token_generation_base64
 
 # egg-info
 *.egg-info

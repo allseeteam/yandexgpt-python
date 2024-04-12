@@ -1,9 +1,20 @@
-from .yandex_gpt import YandexGPTBase, YandexGPT
-from .config_manager import YandexGPTConfigManagerBase, YandexGPTConfigManagerForAPIKey
+from .yandex_gpt import (
+    YandexGPTBase,
+    YandexGPT
+)
+from .config_manager import (
+    YandexGPTConfigManagerBase,
+    YandexGPTConfigManagerForAPIKey,
+    YandexGPTConfigManagerForIAMToken,
+    YandexGPTConfigManagerForIAMTokenWithBase64Key
+)
+
 
 __all__ = [
     'YandexGPTBase',
     'YandexGPT',
     'YandexGPTConfigManagerBase',
-    'YandexGPTConfigManagerForAPIKey'
+    'YandexGPTConfigManagerForAPIKey',
+    'YandexGPTConfigManagerForIAMToken',
+    'YandexGPTConfigManagerForIAMTokenWithBase64Key'
 ]
