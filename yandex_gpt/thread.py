@@ -69,10 +69,10 @@ class YandexGPTThread(YandexGPT):
             timeout: int = 15
     ):
         """
-        Starts the thread.
+        Runs the thread asynchronously.
         :param temperature: from 0 to 1
         :param max_tokens: maximum number of tokens
-        :param stream: IDK whould it work in current realization (keep it False)
+        :param stream: IDK would it work in current realization (keep it False)
         :param completion_url: URL of the completion API
         :param timeout: time after which the operation is considered timed out
         """
@@ -89,6 +89,40 @@ class YandexGPTThread(YandexGPT):
                     stream=stream,
                     completion_url=completion_url,
                     timeout=timeout
+                )
+                self.add_message(role="assistant", text=completion_text)
+            except Exception as e:
+                self.status["status"] = "error"
+                self.status["last_error_message"] = str(e)
+            finally:
+                self.status["status"] = "idle"
+
+    def run_sync(
+            self,
+            temperature: float = 0.6,
+            max_tokens: int = 1000,
+            stream: bool = False,
+            completion_url: str = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
+    ):
+        """
+        Runs the thread synchronously.
+        :param temperature: from 0 to 1
+        :param max_tokens: maximum number of tokens
+        :param stream: IDK would it work in current realization (keep it False)
+        :param completion_url: URL of the completion API
+        """
+        if self.status["status"] == "running":
+            raise Exception("Thread is already running")
+        else:
+            self.status["status"] = "running"
+
+            try:
+                completion_text = self.get_sync_completion(
+                    messages=self.messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    stream=stream,
+                    completion_url=completion_url
                 )
                 self.add_message(role="assistant", text=completion_text)
             except Exception as e:

@@ -8,6 +8,7 @@ from typing import (
 )
 
 import aiohttp
+import requests
 
 from .config_manager import YandexGPTConfigManagerBase
 
@@ -79,6 +80,28 @@ class YandexGPTBase:
                         raise Exception(f"Failed to poll operation status, status code: {resp.status}")
                 await asyncio.sleep(1)
 
+    @staticmethod
+    def send_sync_completion_request(
+            headers: Dict[str, str],
+            payload: Dict[str, Any],
+            completion_url: str = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
+    ) -> Dict[str, Any]:
+        """
+        Sends sync request to completion API.
+        :param headers: dict with authorization token (IAM), content type, and x-folder-id (YandexCloud catalog ID)
+        :param payload: dict with model URI, completion options, and messages
+        :param completion_url: URL of the completion API
+        :return: completion result
+        """
+        # Making the request
+        response = requests.post(completion_url, headers=headers, json=payload)
+        # If the request was successful, return the completion result
+        # Otherwise, raise an exception
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to send sync request, status code: {response.status_code}")
+
 
 class YandexGPT(YandexGPTBase):
     def __init__(
@@ -97,6 +120,42 @@ class YandexGPT(YandexGPTBase):
         """
         self.config_manager = config_manager
 
+    def _create_completion_request_headers(self) -> Dict[str, str]:
+        """
+        Creates headers for the completion request.
+        :return: dict with authorization credentials, content type, and x-folder-id (YandexCloud catalog ID)
+        """
+        return {
+            "Content-Type": "application/json",
+            "Authorization": self.config_manager.completion_request_authorization_field,
+            "x-folder-id": self.config_manager.completion_request_catalog_id_field
+        }
+
+    def _create_completion_request_payload(
+            self,
+            messages: Union[List[YandexGPTMessage], List[Dict[str, str]]],
+            temperature: float = 0.6,
+            max_tokens: int = 1000,
+            stream: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Creates payload for the completion request.
+        :param messages: list of messages with roles and texts (dict or YandexGPTMessage)
+        :param temperature: from 0 to 1
+        :param max_tokens: maximum number of tokens
+        :param stream: IDK would it work in current realization (keep it False)
+        :return: dict with model URI, completion options, and messages
+        """
+        return {
+            "modelUri": self.config_manager.completion_request_model_type_uri_field,
+            "completionOptions": {
+                "stream": stream,
+                "temperature": temperature,
+                "maxTokens": max_tokens
+            },
+            "messages": messages
+        }
+
     async def get_async_completion(
             self,
             messages: Union[List[YandexGPTMessage], List[Dict[str, str]]],
@@ -111,26 +170,19 @@ class YandexGPT(YandexGPTBase):
         :param messages: list of messages with roles and texts (dict or YandexGPTMessage)
         :param temperature: from 0 to 1
         :param max_tokens: maximum number of tokens
-        :param stream: IDK whould it work in current realization (keep it False)
+        :param stream: IDK would it work in current realization (keep it False)
         :param completion_url: URL of the completion API
         :param timeout: time after which the operation is considered timed out
         :return: text of the completion
         """
         # Making the request and obtaining the ID of the completion operation
-        headers: Dict[str, str] = {
-            "Content-Type": "application/json",
-            "Authorization": self.config_manager.completion_request_authorization_field,
-            "x-folder-id": self.config_manager.completion_request_catalog_id_field
-        }
-        payload: Dict[str, Any] = {
-            "modelUri": self.config_manager.completion_request_model_type_uri_field,
-            "completionOptions": {
-                "stream": stream,
-                "temperature": temperature,
-                "maxTokens": max_tokens
-            },
-            "messages": messages
-        }
+        headers: Dict[str, str] = self._create_completion_request_headers()
+        payload: Dict[str, Any] = self._create_completion_request_payload(
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=stream
+        )
 
         completion_request_id: str = await self.send_async_completion_request(
             headers=headers,
@@ -151,3 +203,42 @@ class YandexGPT(YandexGPTBase):
             raise Exception(f"Failed to get completion: {completion_response['error']}")
         else:
             return completion_response['response']['alternatives'][0]['message']['text']
+
+    def get_sync_completion(
+            self,
+            messages: Union[List[YandexGPTMessage], List[Dict[str, str]]],
+            temperature: float = 0.6,
+            max_tokens: int = 1000,
+            stream: bool = False,
+            completion_url: str = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
+    ):
+        """
+        Sends sync completion request to the Yandex GPT API and returns the result.
+        :param messages: list of messages with roles and texts (dict or YandexGPTMessage)
+        :param temperature: from 0 to 1
+        :param max_tokens: maximum number of tokens
+        :param stream: IDK would it work in current realization (keep it False)
+        :param completion_url: URL of the completion API
+        :return: text of the completion
+        """
+        # Making the request
+        headers: Dict[str, str] = self._create_completion_request_headers()
+        payload: Dict[str, Any] = self._create_completion_request_payload(
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=stream
+        )
+
+        completion_response: Dict[str, Any] = self.send_sync_completion_request(
+            headers=headers,
+            payload=payload,
+            completion_url=completion_url
+        )
+
+        # If the request was successful, return the completion result
+        # Otherwise, raise an exception
+        if completion_response.get('error', None):
+            raise Exception(f"Failed to get completion: {completion_response['error']}")
+        else:
+            return completion_response['result']['alternatives'][0]['message']['text']
