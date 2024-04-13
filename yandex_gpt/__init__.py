@@ -8,6 +8,7 @@ from .config_manager import (
     YandexGPTConfigManagerForIAMToken,
     YandexGPTConfigManagerForIAMTokenWithBase64Key
 )
+from .thread import YandexGPTThread
 
 
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     'YandexGPTConfigManagerBase',
     'YandexGPTConfigManagerForAPIKey',
     'YandexGPTConfigManagerForIAMToken',
-    'YandexGPTConfigManagerForIAMTokenWithBase64Key'
+    'YandexGPTConfigManagerForIAMTokenWithBase64Key',
+    'YandexGPTThread'
 ]
