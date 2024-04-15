@@ -6,6 +6,7 @@ The YandexGPT Python SDK provides an easy-to-use interface for interacting with 
 ## Table of Contents
 - [Introduction](#Introduction)
 - [Features](#Features)
+- [Documentation](#Documentation)
 - [Installation using pip](#Installation-using-pip)
 - [Local installation using pip](#Local-installation-using-pip)
 - [Usage](#Usage)
@@ -22,6 +23,10 @@ The YandexGPT Python SDK provides an easy-to-use interface for interacting with 
 - Includes utility for managing API request headers and payload.
 
 The SDK depends on several Python libraries for its operation. These dependencies are specified in the [requirements.txt](requirements.txt) file.
+
+
+## Documentation
+For more detailed information, including installation guides, usage examples, and API references, please visit the [YandexGPT Python SDK Documentation](https://yandexgpt-python.readthedocs.io/en/latest/).
 
 ## Installation using pip
 To install the YandexGPT Python SDK as a package using pip, run the following command:
@@ -98,7 +103,7 @@ asyncio.run(get_completion())
 For any issues related to the configuration or usage of the SDK, ensure that the catalog ID, API key, and model type are correctly set and that the environment variables (if used) are properly configured.
 
 ## Contributors
-This project is developed and maintained by Gregory Matsnev. Contributions are welcome.
+This project is developed and maintained by ALL SEE LLC. Contributions are welcome.
 
 ## License
 This project is licensed under the MIT License. For more information, see the LICENSE file in the project's GitHub repository.

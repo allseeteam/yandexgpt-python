@@ -20,7 +20,17 @@ class YandexGPTMessage(TypedDict):
 
 class YandexGPTBase:
     """
-    This class is used to interact with the Yandex GPT API. Currently, only async methods are implemented.
+    This class is used to interact with the Yandex GPT API, providing asynchronous and synchronous methods to send
+    requests and poll for their completion. Currently, only asynchronous methods are implemented fully.
+
+    Methods
+    -------
+    send_async_completion_request(headers: Dict[str, str], payload: Dict[str, Any], completion_url: str) -> str
+        Sends an asynchronous request to the Yandex GPT completion API.
+    poll_async_completion(operation_id: str, headers: Dict[str, str], timeout: int, poll_url: str) -> Dict[str, Any]
+        Polls the status of an asynchronous completion operation until it completes or times out.
+    send_sync_completion_request(headers: Dict[str, str], payload: Dict[str, Any], completion_url: str) -> Dict[str, Any]
+        Sends a synchronous request to the Yandex GPT completion API.
     """
     @staticmethod
     async def send_async_completion_request(
@@ -29,11 +39,21 @@ class YandexGPTBase:
             completion_url: str = "https://llm.api.cloud.yandex.net/foundationModels/v1/completionAsync"
     ) -> str:
         """
-        Sends async request to completion API.
-        :param headers: dict with authorization token (IAM), content type, and x-folder-id (YandexCloud catalog ID)
-        :param payload: dict with model URI, completion options, and messages
-        :param completion_url: URL of the completion API
-        :return: ID of the completion operation to poll
+        Sends an asynchronous request to the Yandex GPT completion API.
+
+        Parameters
+        ----------
+        headers : Dict[str, str]
+            Dictionary containing the authorization token (IAM), content type, and x-folder-id (YandexCloud catalog ID).
+        payload : Dict[str, Any]
+            Dictionary with the model URI, completion options, and messages.
+        completion_url : str
+            URL of the completion API.
+
+        Returns
+        -------
+        str
+            ID of the completion operation to poll.
         """
         # Making the request
         async with aiohttp.ClientSession() as session:
@@ -54,12 +74,23 @@ class YandexGPTBase:
             poll_url: str = 'https://llm.api.cloud.yandex.net/operations/'
     ) -> Dict[str, Any]:
         """
-        Polls async completion operation.
-        :param operation_id: ID of the completion operation to poll
-        :param headers: dict with authorization token (IAM)
-        :param timeout: time after which the operation is considered timed out
-        :param poll_url: poll URL
-        :return: completion result
+        Polls the status of an asynchronous completion operation until it completes or times out.
+
+        Parameters
+        ----------
+        operation_id : str
+            ID of the completion operation to poll.
+        headers : Dict[str, str]
+            Dictionary containing the authorization token (IAM).
+        timeout : int
+            Time in seconds after which the operation is considered timed out.
+        poll_url : str
+            Poll URL.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Completion result.
         """
         # Polling the completion operation for the specified amount of time
         async with aiohttp.ClientSession() as session:
@@ -87,11 +118,21 @@ class YandexGPTBase:
             completion_url: str = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
     ) -> Dict[str, Any]:
         """
-        Sends sync request to completion API.
-        :param headers: dict with authorization token (IAM), content type, and x-folder-id (YandexCloud catalog ID)
-        :param payload: dict with model URI, completion options, and messages
-        :param completion_url: URL of the completion API
-        :return: completion result
+        Sends a synchronous request to the Yandex GPT completion API.
+
+        Parameters
+        ----------
+        headers : Dict[str, str]
+            Dictionary containing the authorization token (IAM), content type, and x-folder-id (YandexCloud catalog ID).
+        payload : Dict[str, Any]
+            Dictionary with the model URI, completion options, and messages.
+        completion_url : str
+            URL of the completion API.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Completion result.
         """
         # Making the request
         response = requests.post(completion_url, headers=headers, json=payload)
@@ -104,26 +145,43 @@ class YandexGPTBase:
 
 
 class YandexGPT(YandexGPTBase):
+    """
+    Extends the YandexGPTBase class to interact with the Yandex GPT API using a simplified configuration manager.
+    This class allows for easier configuration of API requests and includes both synchronous and asynchronous methods.
+
+    Methods
+    -------
+    get_async_completion(messages, temperature, max_tokens, stream, completion_url, timeout) -> str
+        Asynchronously sends a completion request to the Yandex GPT API and returns the completion result.
+    get_sync_completion(messages, temperature, max_tokens, stream, completion_url) -> str
+        Synchronously sends a completion request to the Yandex GPT API and returns the completion result.
+    """
     def __init__(
             self,
             config_manager: Union[YandexGPTConfigManagerBase, Dict[str, Any]]
     ) -> None:
         """
-        This class is used to interact with the Yandex GPT API with easy to use config manager. Currently, only async
-        methods are implemented. If you want to get more advanced features, take a look at the YandexGPTBase class.
+        Initializes the YandexGPT class with a configuration manager.
 
-        :param config_manager: Config manager or a dictionary, containing:
-        1) completion_request_model_type_uri_field
-        ("gpt://{self.config_manager.catalog_id}/{self.config_manager.model_type}/latest")
-        2) completion_request_catalog_id_field (self.config_manager.catalog_id)
-        3) completion_request_authorization_field ("Bearer {iam_token}" or "Api-Key {api_key}")
+        Parameters
+        ----------
+        config_manager : Union[YandexGPTConfigManagerBase, Dict[str, Any]]
+            Config manager or a dictionary containing:
+            1) completion_request_model_type_uri_field
+               ("gpt://{self.config_manager.catalog_id}/{self.config_manager.model_type}/latest")
+            2) completion_request_catalog_id_field (self.config_manager.catalog_id)
+            3) completion_request_authorization_field ("Bearer {iam_token}" or "Api-Key {api_key}")
         """
         self.config_manager = config_manager
 
     def _create_completion_request_headers(self) -> Dict[str, str]:
         """
-        Creates headers for the completion request.
-        :return: dict with authorization credentials, content type, and x-folder-id (YandexCloud catalog ID)
+        Creates headers for sending a completion request to the API.
+
+        Returns
+        -------
+        Dict[str, str]
+            Dictionary with authorization credentials, content type, and x-folder-id (YandexCloud catalog ID).
         """
         return {
             "Content-Type": "application/json",
@@ -139,12 +197,23 @@ class YandexGPT(YandexGPTBase):
             stream: bool = False
     ) -> Dict[str, Any]:
         """
-        Creates payload for the completion request.
-        :param messages: list of messages with roles and texts (dict or YandexGPTMessage)
-        :param temperature: from 0 to 1
-        :param max_tokens: maximum number of tokens
-        :param stream: IDK would it work in current realization (keep it False)
-        :return: dict with model URI, completion options, and messages
+        Creates the payload for sending a completion request.
+
+        Parameters
+        ----------
+        messages : Union[List[YandexGPTMessage], List[Dict[str, str]]]
+            List of messages with roles and texts.
+        temperature : float
+            Controls the randomness of the completion, from 0 (deterministic) to 1 (random).
+        max_tokens : int
+            Maximum number of tokens to generate.
+        stream : bool
+            Stream option for the API, currently not supported in this implementation.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary containing the model URI, completion options, and messages.
         """
         return {
             "modelUri": self.config_manager.completion_request_model_type_uri_field,
@@ -166,14 +235,32 @@ class YandexGPT(YandexGPTBase):
             timeout: int = 5
     ) -> str:
         """
-        Sends async completion request to the Yandex GPT API and polls the result.
-        :param messages: list of messages with roles and texts (dict or YandexGPTMessage)
-        :param temperature: from 0 to 1
-        :param max_tokens: maximum number of tokens
-        :param stream: IDK would it work in current realization (keep it False)
-        :param completion_url: URL of the completion API
-        :param timeout: time after which the operation is considered timed out
-        :return: text of the completion
+        Sends an asynchronous completion request to the Yandex GPT API and polls for the result.
+
+        Parameters
+        ----------
+        messages : Union[List[YandexGPTMessage], List[Dict[str, str]]]
+            List of messages with roles and texts.
+        temperature : float
+            Randomness of the completion, from 0 (deterministic) to 1 (most random).
+        max_tokens : int
+            Maximum number of tokens to generate.
+        stream : bool
+            Indicates whether streaming is enabled; currently not supported in this implementation.
+        completion_url : str
+            URL to the Yandex GPT asynchronous completion API.
+        timeout : int
+            Time in seconds after which the operation is considered timed out.
+
+        Returns
+        -------
+        str
+            The text of the completion result.
+
+        Raises
+        ------
+        Exception
+            If the completion operation fails or times out.
         """
         # Making the request and obtaining the ID of the completion operation
         headers: Dict[str, str] = self._create_completion_request_headers()
@@ -213,13 +300,30 @@ class YandexGPT(YandexGPTBase):
             completion_url: str = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion",
     ):
         """
-        Sends sync completion request to the Yandex GPT API and returns the result.
-        :param messages: list of messages with roles and texts (dict or YandexGPTMessage)
-        :param temperature: from 0 to 1
-        :param max_tokens: maximum number of tokens
-        :param stream: IDK would it work in current realization (keep it False)
-        :param completion_url: URL of the completion API
-        :return: text of the completion
+        Sends a synchronous completion request to the Yandex GPT API and returns the result.
+
+        Parameters
+        ----------
+        messages : Union[List[YandexGPTMessage], List[Dict[str, str]]]
+            List of messages with roles and texts.
+        temperature : float
+            Randomness of the completion, from 0 (deterministic) to 1 (most random).
+        max_tokens : int
+            Maximum number of tokens to generate.
+        stream : bool
+            Indicates whether streaming is enabled; currently not supported in this implementation.
+        completion_url : str
+            URL to the Yandex GPT synchronous completion API.
+
+        Returns
+        -------
+        str
+            The text of the completion result.
+
+        Raises
+        ------
+        Exception
+            If the completion request fails.
         """
         # Making the request
         headers: Dict[str, str] = self._create_completion_request_headers()

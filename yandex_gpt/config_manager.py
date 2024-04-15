@@ -19,6 +19,24 @@ available_models: List[str] = [
 
 
 class YandexGPTConfigManagerBase:
+    """
+    Base class for YaGPT configuration management. It handles configurations related to model type, catalog ID, IAM
+    token, and API key for authorization when making requests to the completion endpoint.
+
+    Attributes
+    ----------
+    model_type : Optional[str]
+        The model type to use. Supported values include 'yandexgpt', 'yandexgpt-lite', 'summarization'.
+    catalog_id : Optional[str]
+        The Catalog ID on YandexCloud to be used.
+    iam_token : Optional[str]
+        The IAM token for authorization. Either `iam_token` or `api_key` is used for authorization. If both are
+        provided, `iam_token` will be preferred. More details on getting an IAM token can be found here:
+        https://yandex.cloud/ru/docs/iam/operations/iam-token/create-for-sa
+    api_key : Optional[str]
+        The API key for authorization. More details on getting an API key can be found here:
+        https://yandex.cloud/ru/docs/iam/operations/api-key/create
+    """
     def __init__(
             self,
             model_type: Optional[str] = None,
@@ -27,16 +45,18 @@ class YandexGPTConfigManagerBase:
             api_key: Optional[str] = None,
     ) -> None:
         """
-        Base class for YaGPT configuration. It contains model type, catalog ID, IAM token or API key, which are used for
-        authorization when making requests to the completion endpoint.
+        Initializes a new instance of the YandexGPTConfigManagerBase class.
 
-        :param model_type: model type to use. Supported values: 'yandexgpt', 'yandexgpt-lite', 'summarization'.
-        :param catalog_id: Catalog ID on YandexCloud to use.
-        :param iam_token: IAM token to use (you provide either iam_token or api_key, if you provide both, iam_token will
-        be used in the future) (how to get IAM token:
-        https://yandex.cloud/ru/docs/iam/operations/iam-token/create-for-sa).
-        :param api_key: API key to use (how to get API key:
-        https://yandex.cloud/ru/docs/iam/operations/api-key/create).
+        Parameters
+        ----------
+        model_type : Optional[str], optional
+            Model type to use.
+        catalog_id : Optional[str], optional
+            Catalog ID on YandexCloud to use.
+        iam_token : Optional[str], optional
+            IAM token for authorization.
+        api_key : Optional[str], optional
+            API key for authorization.
         """
         self.model_type: Optional[str] = model_type
         self.catalog_id: Optional[str] = catalog_id
@@ -46,10 +66,18 @@ class YandexGPTConfigManagerBase:
     @property
     def completion_request_authorization_field(self) -> str:
         """
-        A dynamic property that returns authorization field for the completion request header.
-        Either iam_token or api_key must be set, otherwise ValueError will be raised.
-        :return: authorization field for the completion request header in the form of a string: "Bearer {iam_token}" or
-        "Api-Key {api_key}".
+        Returns the authorization field for the completion request header based on the IAM token or API key.
+
+        Raises
+        ------
+        ValueError
+            If neither IAM token nor API key is set.
+
+        Returns
+        -------
+        str
+            The authorization field for the completion request header in the form of "Bearer {iam_token}" or
+            "Api-Key {api_key}".
         """
         # Checking if either iam_token or api_key is set and returning the authorization field string
         if self.iam_token:
@@ -62,9 +90,17 @@ class YandexGPTConfigManagerBase:
     @property
     def completion_request_catalog_id_field(self) -> str:
         """
-        A dynamic property that returns catalog id field for the completion request header. If catalog_id is not set,
-        ValueError will be raised.
-        :return: catalog id field for the completion request header in the form of a string: "{catalog_id}".
+        Returns the catalog ID field for the completion request header.
+
+        Raises
+        ------
+        ValueError
+            If catalog_id is not set.
+
+        Returns
+        -------
+        str
+            The catalog ID field for the completion request header.
         """
         # Checking if catalog_id is set and returning the catalog id field string
         if self.catalog_id:
@@ -75,10 +111,17 @@ class YandexGPTConfigManagerBase:
     @property
     def completion_request_model_type_uri_field(self) -> str:
         """
-        A dynamic property that returns model type field for the completion request payload. If model_type or catalog_id
-        is not set, ValueError will be raised. If model_type not in available_models, ValueError will be raised.
-        :return: model type field for the completion request header in the form of a string:
-        "gpt://{self.config_manager.catalog_id}/{self.config_manager.model_type}/latest".
+        Returns the model type URI field for the completion request payload.
+
+        Raises
+        ------
+        ValueError
+            If model_type or catalog_id is not set or if model_type is not in the available models.
+
+        Returns
+        -------
+        str
+            The model type URI field for the completion request header in the URI format.
         """
         global available_models
 
@@ -94,6 +137,22 @@ class YandexGPTConfigManagerBase:
 
 
 class YandexGPTConfigManagerForAPIKey(YandexGPTConfigManagerBase):
+    """
+    Class for configuring the YandexGPT model using an API key. It supports setting model type, catalog ID, and API key
+    directly or through environment variables. The class allows for configuration flexibility by providing the option to
+    use environmental variables for model type (`YANDEX_GPT_MODEL_TYPE`), catalog ID (`YANDEX_GPT_CATALOG_ID`), and API
+    key (`YANDEX_GPT_API_KEY`), which can override the constructor values if set.
+
+    Attributes
+    ----------
+    model_type : Optional[str]
+        The model type to use. Supported values include 'yandexgpt', 'yandexgpt-lite', 'summarization'.
+    catalog_id : Optional[str]
+        The Catalog ID on YandexCloud to be used.
+    api_key : Optional[str]
+        The API key for authorization. More details on obtaining an API key can be found here:
+        https://yandex.cloud/ru/docs/iam/operations/api-key/create
+    """
     def __init__(
             self,
             model_type: Optional[str] = None,
@@ -101,14 +160,16 @@ class YandexGPTConfigManagerForAPIKey(YandexGPTConfigManagerBase):
             api_key: Optional[str] = None,
     ) -> None:
         """
-        Class for YaGPT configuration using API key. It contains model type, catalog ID and API key, which are used for
-        authorization when making requests to the completion endpoint. You can set parameters using the constructor or
-        set them in the environment variables: YANDEX_GPT_MODEL_TYPE, YANDEX_GPT_CATALOG_ID and YANDEX_GPT_API_KEY.
+        Initializes a new instance of the YandexGPTConfigManagerForAPIKey class.
 
-        :param model_type: model type to use. Supported values: 'yandexgpt', 'yandexgpt-lite', 'summarization'.
-        :param catalog_id: Catalog ID on YandexCloud to use.
-        :param api_key: API key to use (how to get API key:
-        https://yandex.cloud/ru/docs/iam/operations/api-key/create).
+        Parameters
+        ----------
+        model_type : Optional[str], optional
+            Model type to use.
+        catalog_id : Optional[str], optional
+            Catalog ID on YandexCloud to use.
+        api_key : Optional[str], optional
+            API key for authorization.
         """
         # Setting model type, catalog ID and API key from the constructor
         super().__init__(
@@ -125,7 +186,7 @@ class YandexGPTConfigManagerForAPIKey(YandexGPTConfigManagerBase):
 
     def _set_config_from_env_vars(self) -> None:
         """
-        Sets config from environment variables. If environment variables are not set, default values will be used.
+        Sets configuration parameters from environment variables if they are not provided in the constructor.
         """
         self.model_type = os.environ.get("YANDEX_GPT_MODEL_TYPE", self.model_type)
         self.catalog_id = os.environ.get("YANDEX_GPT_CATALOG_ID", self.catalog_id)
@@ -133,7 +194,7 @@ class YandexGPTConfigManagerForAPIKey(YandexGPTConfigManagerBase):
 
     def _check_config(self) -> None:
         """
-        Checks if model type, catalog ID and API key are set. If not, ValueError will be raised.
+        Ensures that the necessary configuration parameters are set, raising a ValueError if any are missing.
         """
         if not self.model_type:
             raise ValueError(
@@ -153,6 +214,27 @@ class YandexGPTConfigManagerForAPIKey(YandexGPTConfigManagerBase):
 
 
 class YandexGPTConfigManagerForIAMToken(YandexGPTConfigManagerBase):
+    """
+    Class for configuring the YandexGPT model using an IAM token. It handles configurations involving model type,
+    catalog ID, and IAM token, with options for direct input or initialization via environment variables. The class
+    provides several pathways for initializing these configurations:
+
+    1. Directly through constructor parameters.
+    2. Through environment variables `YANDEX_GPT_MODEL_TYPE`, `YANDEX_GPT_CATALOG_ID`, and `YANDEX_GPT_IAM_TOKEN`.
+    3. Automatically generating the IAM token using the environment variables `YANDEX_GPT_IAM_URL`,
+       `YANDEX_GPT_SERVICE_ACCOUNT_ID`, `YANDEX_GPT_SERVICE_ACCOUNT_KEY_ID`, `YANDEX_GPT_CATALOG_ID`, and
+       `YANDEX_GPT_PRIVATE_KEY`.
+
+    Attributes
+    ----------
+    model_type : Optional[str]
+        The model type to use. Supported values include 'yandexgpt', 'yandexgpt-lite', 'summarization'.
+    catalog_id : Optional[str]
+        The Catalog ID on YandexCloud to be used.
+    iam_token : Optional[str]
+        The IAM token for authorization. Details on obtaining an IAM token can be found here:
+        https://yandex.cloud/ru/docs/iam/operations/iam-token/create-for-sa
+    """
     def __init__(
             self,
             model_type: Optional[str] = None,
@@ -160,20 +242,16 @@ class YandexGPTConfigManagerForIAMToken(YandexGPTConfigManagerBase):
             iam_token: Optional[str] = None,
     ) -> None:
         """
-        Class for YaGPT configuration using IAM token. It contains model type, catalog ID and IAM token, which are used
-        for authorization when making requests to the completion endpoint.
+        Initializes a new instance of the YandexGPTConfigManagerForIAMToken class.
 
-        For initialization, you can ether:
-        1) Provide model type, IAM token, and catalog ID directly as constructor parameters;
-        2) Use YANDEX_GPT_MODEL_TYPE, YANDEX_GPT_CATALOG_ID and YANDEX_GPT_IAM_TOKEN environment variables for direct
-        initialization;
-        3) Use YANDEX_GPT_IAM_URL, YANDEX_GPT_SERVICE_ACCOUNT_ID, YANDEX_GPT_SERVICE_ACCOUNT_KEY_ID,
-        YANDEX_GPT_CATALOG_ID and YANDEX_GPT_PRIVATE_KEY environment variables for generating IAM token;
-
-        :param model_type: model type to use. Supported values: 'yandexgpt', 'yandexgpt-lite', 'summarization'.
-        :param catalog_id: Catalog ID on YandexCloud to use.
-        :param iam_token: IAM token to use (how to get IAM token:
-        https://yandex.cloud/ru/docs/iam/operations/iam-token/create-for-sa).
+        Parameters
+        ----------
+        model_type : Optional[str], optional
+            Model type to use.
+        catalog_id : Optional[str], optional
+            Catalog ID on YandexCloud to use.
+        iam_token : Optional[str], optional
+            IAM token for authorization.
         """
         # Setting model type, catalog ID and IAM token from the constructor
         super().__init__(
@@ -201,8 +279,8 @@ class YandexGPTConfigManagerForIAMToken(YandexGPTConfigManagerBase):
 
     def _set_config_from_env_vars(self) -> None:
         """
-        Sets config from environment variables. If environment variables are not set, default values will be used. If
-        IAM token is not set in environment variables, trying to generate it using environment variables.
+        Sets config from environment variables or tries to generate the IAM token using additional environment variables
+        if not directly provided.
         """
         self.model_type = os.environ.get("YANDEX_GPT_MODEL_TYPE", self.model_type)
         self.catalog_id = os.environ.get("YANDEX_GPT_CATALOG_ID", self.catalog_id)
@@ -214,7 +292,7 @@ class YandexGPTConfigManagerForIAMToken(YandexGPTConfigManagerBase):
 
     def _set_iam_from_env_config_and_private_key(self) -> None:
         """
-        Generates and sets IAM token from environment variables.
+        Generates and sets IAM token from environment variables if not provided.
         """
         # Getting environment variables
         iam_url: str = os.getenv("YANDEX_GPT_IAM_URL", "https://iam.api.cloud.yandex.net/iam/v1/tokens")
@@ -246,12 +324,23 @@ class YandexGPTConfigManagerForIAMToken(YandexGPTConfigManagerBase):
             url: str = "https://iam.api.cloud.yandex.net/iam/v1/tokens",
     ) -> str:
         """
-        Generates JWT token from service account id, private key, and key id.
-        :param service_account_id: service account id
-        :param private_key: private key
-        :param key_id: key id
-        :param url: url for swapping JWT token to IAM request
-        :return: encoded JWT token
+        Generates and swaps a JWT token to an IAM token.
+
+        Parameters
+        ----------
+        service_account_id : str
+            Service account ID
+        private_key : str
+            Private key
+        key_id : str
+            Service account key ID
+        url : str
+            IAM URL for token request
+
+        Returns
+        -------
+        str
+            The IAM token
         """
         # Generating JWT token
         now: int = int(time.time())
@@ -274,10 +363,24 @@ class YandexGPTConfigManagerForIAMToken(YandexGPTConfigManagerBase):
             jwt_token: str, url: str = "https://iam.api.cloud.yandex.net/iam/v1/tokens"
     ) -> str:
         """
-        Swaps JWT token to IAM token.
-        :param jwt_token: encoded JWT token
-        :param url: url for swapping JWT token to IAM request
-        :return: IAM token
+        Swaps a JWT token for an IAM token by making a POST request to the Yandex IAM service.
+
+        Parameters
+        ----------
+        jwt_token : str
+            The JWT token to be swapped.
+        url : str, optional
+            The URL to send the JWT token to, by default set to Yandex IAM token service endpoint.
+
+        Returns
+        -------
+        str
+            The IAM token received in response.
+
+        Raises
+        ------
+        Exception
+            If the request fails or does not return a successful response.
         """
         headers: Dict[str, str] = {"Content-Type": "application/json"}
         data: Dict[str, str] = {"jwt": jwt_token}
@@ -296,7 +399,7 @@ class YandexGPTConfigManagerForIAMToken(YandexGPTConfigManagerBase):
 
     def _check_config(self) -> None:
         """
-        Checks if model type, catalog ID and API key are set. If not, ValueError will be raised.
+        Ensures that the necessary configuration parameters are set, raising a ValueError if any are missing.
         """
         if not self.model_type:
             raise ValueError(
@@ -319,13 +422,21 @@ class YandexGPTConfigManagerForIAMToken(YandexGPTConfigManagerBase):
 
 class YandexGPTConfigManagerForIAMTokenWithBase64Key(YandexGPTConfigManagerForIAMToken):
     """
-    This class is modified version of YandexGPTConfigManagerForIAMToken for handling base64-encoded private key set in
-    YANDEX_GPT_PRIVATE_KEY_BASE64 environment variable. It may be useful when dealing with docker because there is no
-    special characters like '\n' which can break key parsing to docker container environment.
+    A specialized configuration manager for YandexGPT that handles base64-encoded private keys. This is particularly
+    useful in environments like Docker where special characters (e.g., newline) in environment variables can cause
+    issues. The private key is expected to be set in the YANDEX_GPT_PRIVATE_KEY_BASE64 environment variable.
+
+    Inherits attributes from YandexGPTConfigManagerForIAMToken.
     """
     def _set_iam_from_env_config_and_private_key(self) -> None:
         """
-        Generates and sets IAM token from environment variables.
+        Overrides the base method to generate and set the IAM token using a base64-encoded private key from
+        environment variables.
+
+        Raises
+        ------
+        ValueError
+            If any required environment variables are missing.
         """
         # Getting environment variables
         iam_url: str = os.getenv("YANDEX_GPT_IAM_URL", "https://iam.api.cloud.yandex.net/iam/v1/tokens")

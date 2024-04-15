@@ -10,16 +10,35 @@ class YandexGPTThreadStatus(TypedDict):
 
 
 class YandexGPTThread(YandexGPT):
+    """
+    A thread-based interface for interacting with the Yandex GPT model.
+
+    This class manages asynchronous messaging and maintains the state of conversation threads.
+
+    :ivar messages: List of messages maintained in the conversation thread.
+    :ivar status: Tracks the current status and last error message of the thread.
+
+    Attributes
+    ----------
+    messages : List[YandexGPTMessage]
+        Maintained list of messages in the conversation thread.
+    status : YandexGPTThreadStatus
+        Current status and last error information of the thread.
+    """
     def __init__(
             self,
             config_manager: Union[YandexGPTConfigManagerBase, Dict[str, Any]],
             messages: Optional[List[YandexGPTMessage]] = None,
     ) -> None:
         """
-        A thread-based interface for interacting with the Yandex GPT model, managing asynchronous messaging and
-        maintaining the state of conversation threads.
-        :param config_manager: Yandex GPT config manager
-        :param messages: optional list of messages with roles and texts
+        Initializes a new instance of the YandexGPTThread.
+
+        Parameters
+        ----------
+        config_manager : Union[YandexGPTConfigManagerBase, Dict[str, Any]]
+            Configuration manager for the Yandex GPT model.
+        messages : Optional[List[YandexGPTMessage]], optional
+            Initial list of messages within the thread, by default None.
         """
         super().__init__(config_manager=config_manager)
 
@@ -40,23 +59,40 @@ class YandexGPTThread(YandexGPT):
     ) -> None:
         """
         Appends a new message to the conversation thread.
-        :param role: message role
-        :param text: message text
+
+        Parameters
+        ----------
+        role : str
+            The role of the message, typically 'user' or 'assistant'.
+        text : str
+            The content of the message.
         """
         self.messages.append(YandexGPTMessage(role=role, text=text))
 
     def __getitem__(self, index):
         """
-        Allows to get a message from the conversation thread in array-like style.
-        :param index: index of the message
-        :return: message from the Thread by index
+        Allows retrieval of a message by index from the conversation thread.
+
+        Parameters
+        ----------
+        index : int
+            Index of the message to retrieve.
+
+        Returns
+        -------
+        YandexGPTMessage
+            The message at the specified index.
         """
         return self.messages[index]
 
     def __len__(self):
         """
-        Allows to get the number of messages in the conversation thread.
-        :return: number of messages in the Thread
+        Returns the number of messages in the conversation thread.
+
+        Returns
+        -------
+        int
+            The number of messages.
         """
         return len(self.messages)
 
@@ -69,12 +105,25 @@ class YandexGPTThread(YandexGPT):
             timeout: int = 15
     ):
         """
-        Runs the thread asynchronously.
-        :param temperature: from 0 to 1
-        :param max_tokens: maximum number of tokens
-        :param stream: IDK would it work in current realization (keep it False)
-        :param completion_url: URL of the completion API
-        :param timeout: time after which the operation is considered timed out
+        Runs the thread asynchronously, requesting and appending completion from the Yandex GPT model.
+
+        Parameters
+        ----------
+        temperature : float
+            Sampling temperature, scales the likelihood of less probable tokens. Value from 0 to 1.
+        max_tokens : int
+            Maximum number of tokens to generate.
+        stream : bool
+            Stream responses from the API (not currently supported).
+        completion_url : str
+            URL of the asynchronous completion API.
+        timeout : int
+            Timeout in seconds for the asynchronous call.
+
+        Raises
+        ------
+        Exception
+            If the thread is already running.
         """
         if self.status["status"] == "running":
             raise Exception("Thread is already running")
@@ -105,11 +154,23 @@ class YandexGPTThread(YandexGPT):
             completion_url: str = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
     ):
         """
-        Runs the thread synchronously.
-        :param temperature: from 0 to 1
-        :param max_tokens: maximum number of tokens
-        :param stream: IDK would it work in current realization (keep it False)
-        :param completion_url: URL of the completion API
+        Runs the thread synchronously, requesting and appending completion from the Yandex GPT model.
+
+        Parameters
+        ----------
+        temperature : float
+            Sampling temperature, scales the likelihood of less probable tokens. Value from 0 to 1.
+        max_tokens : int
+            Maximum number of tokens to generate.
+        stream : bool
+            Stream responses from the API (not currently supported).
+        completion_url : str
+            URL of the synchronous completion API.
+
+        Raises
+        ------
+        Exception
+            If the thread is already running.
         """
         if self.status["status"] == "running":
             raise Exception("Thread is already running")

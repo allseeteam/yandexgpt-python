@@ -7,9 +7,9 @@ with open('requirements.txt') as f:
 
 setup(
     name='yandexgpt-python',
-    version='0.2.2',
-    author='Gregory Matsnev',
-    author_email='grigorij1m@gmail.com',
+    version='0.2.3',
+    author='ALL SEE LLC',
+    author_email='info@allsee.team',
     description='A Python SDK for interacting with the YandexGPT API.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',

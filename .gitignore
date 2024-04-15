@@ -18,3 +18,6 @@ env/.env.iam_token_generation_base64
 
 # egg-info
 *.egg-info
+
+# Docs build
+docs/build
